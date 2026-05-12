@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Finance AI</title>
+  <style>
+    :root {
+      --bg: #111827;
+      --card-bg: #1f2937;
+      --text: #f3f4f6;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --input-bg: #374151;
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: var(--card-bg);
+      padding: 2.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      width: 100%;
+      max-width: 400px;
+    }
+    h2 {
+      margin-top: 0;
+      text-align: center;
+      color: var(--primary);
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      color: #9ca3af;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--input-bg);
+      border: 1px solid #4b5563;
+      border-radius: 0.5rem;
+      color: var(--text);
+      box-sizing: border-box;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: var(--primary-hover);
+    }
+    .toggle {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.875rem;
+    }
+    .toggle a {
+      color: var(--primary);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    #errorMsg {
+      color: #ef4444;
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2 id="title">Login to FinancU</h2>
+    <div id="errorMsg"></div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="johndoe">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••">
+    </div>
+    <button id="submitBtn" onclick="handleAuth()">Login</button>
+    
+    <div class="toggle">
+      <span id="toggleText">Don't have an account? </span>
+      <a onclick="toggleMode()" id="toggleLink">Register</a>
+    </div>
+  </div>
+
+  <script>
+    let isLogin = true;
+
+    function toggleMode() {
+      isLogin = !isLogin;
+      document.getElementById('title').innerText = isLogin ? "Login to FinancU" : "Create Account";
+      document.getElementById('submitBtn').innerText = isLogin ? "Login" : "Register";
+      document.getElementById('toggleText').innerText = isLogin ? "Don't have an account? " : "Already have an account? ";
+      document.getElementById('toggleLink').innerText = isLogin ? "Register" : "Login";
+      document.getElementById('errorMsg').innerText = "";
+    }
+
+    async function handleAuth() {
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      if(!u || !p) return;
+
+      const endpoint = isLogin ? 'http://127.0.0.1:8000/api/login/' : 'http://127.0.0.1:8000/api/register/';
+      
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({username: u, password: p})
+        });
+        const data = await res.json();
+        
+        if(res.ok) {
+          localStorage.setItem('token', data.token);
+          window.location.href = 'index.html';
+        } else {
+          document.getElementById('errorMsg').innerText = JSON.stringify(data);
+        }
+      } catch(e) {
+        document.getElementById('errorMsg').innerText = "Server not reachable.";
+      }
+    }
+  </script>
+</body>
+</html>

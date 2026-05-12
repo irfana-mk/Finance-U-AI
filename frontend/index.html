@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat - Finance AI</title>
+  <style>
+    :root {
+      --bg: #111827;
+      --card-bg: #1f2937;
+      --text: #f3f4f6;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --input-bg: #374151;
+      --bot-msg: #374151;
+      --user-msg: #3b82f6;
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .chat-container {
+      background: var(--card-bg);
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      width: 100%;
+      max-width: 600px;
+      height: 80vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .header {
+      padding: 1rem 1.5rem;
+      background: #111827;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #374151;
+    }
+    .header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: var(--primary);
+    }
+    .logout-btn {
+      background: transparent;
+      border: 1px solid #ef4444;
+      color: #ef4444;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+    }
+    .logout-btn:hover {
+      background: #ef4444;
+      color: white;
+    }
+    .messages {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .msg {
+      max-width: 80%;
+      padding: 0.75rem 1rem;
+      border-radius: 1rem;
+      line-height: 1.4;
+    }
+    .msg.bot {
+      background: var(--bot-msg);
+      align-self: flex-start;
+      border-bottom-left-radius: 0.25rem;
+    }
+    .msg.user {
+      background: var(--user-msg);
+      align-self: flex-end;
+      border-bottom-right-radius: 0.25rem;
+    }
+    .input-area {
+      padding: 1rem 1.5rem;
+      background: #111827;
+      border-top: 1px solid #374151;
+      display: flex;
+      gap: 0.5rem;
+    }
+    input {
+      flex: 1;
+      padding: 0.75rem;
+      background: var(--input-bg);
+      border: 1px solid #4b5563;
+      border-radius: 0.5rem;
+      color: var(--text);
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    button.send {
+      padding: 0.75rem 1.5rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button.send:hover {
+      background: var(--primary-hover);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    <div class="header">
+      <h2>FinancU Assistant</h2>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+    
+    <div class="messages" id="msgs">
+      <div class="msg bot">Hello! I'm your Finance AI Assistant. I can track expenses or answer financial questions. How can I help you today?</div>
+    </div>
+    
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="E.g., I spent 500 on groceries today..." onkeydown="if(event.key==='Enter') sendMessage()">
+      <button class="send" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if(!token) {
+      window.location.href = 'login.html';
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = 'login.html';
+    }
+
+    function appendMessage(text, sender) {
+      const msgs = document.getElementById('msgs');
+      const div = document.createElement('div');
+      div.className = `msg ${sender}`;
+      div.innerText = text;
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('userInput');
+      const text = input.value.trim();
+      if(!text) return;
+      
+      appendMessage(text, 'user');
+      input.value = '';
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/chat/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Token ' + token
+          },
+          body: JSON.stringify({message: text})
+        });
+        
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+
+        const data = await res.json();
+        if(data.reply) {
+          appendMessage(data.reply, 'bot');
+        } else {
+          appendMessage("Error: " + JSON.stringify(data), 'bot');
+        }
+      } catch(e) {
+        appendMessage("Network error.", 'bot');
+      }
+    }
+  </script>
+</body>
+</html>
